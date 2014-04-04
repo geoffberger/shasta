@@ -1,15 +1,19 @@
 {
   "name": "shasta",
   "version": "0.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A small utility library built on top of Backbone that handles routing and rendering.",
+  "main": "src/shasta.js",
   "scripts": {
-    "test": "node node_modules/venus/bin/venus run -t test"
+    "test": "node node_modules/venus/bin/venus run -t test -n"
   },
-  "author": "",
-  "license": "BSD-2-Clause",
+  "author": "Geoff Berger <geoffberger@gmail.com>",
+  "license": "MIT",
   "dependencies": {},
   "devDependencies": {
     "venus": "~2.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/geoffberger/shasta.git"
   }
 }
