@@ -1,0 +1,25 @@
+{
+  libraries: {
+    mochachai: {
+      includes: [
+        '../bower_components/jquery/dist/jquery.js',
+        '../node_modules/venus/.venus/libraries/sinon-1.5.0.js',
+        '../node_modules/venus/.venus/libraries/mocha-1.12.0.js',
+        '../node_modules/venus/.venus/helpers/venus-fixture.js',
+        '../node_modules/venus/.venus/adaptors/adaptor-template.js',
+        '../node_modules/venus/.venus/adaptors/venus-mocha-1.12.0.js',
+        '../bower_components/chai/chai.js',
+        '../bower_components/chai-jquery/chai-jquery.js',
+        'helpers/setup.js'
+      ]
+    }
+  },
+
+  includes: {
+    main: [
+      '../bower_components/underscore/underscore.js',
+      '../bower_components/backbone/backbone.js',
+      '../src/shasta.js'
+    ]
+  }
+}
