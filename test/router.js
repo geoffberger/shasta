@@ -42,16 +42,33 @@ describe('Shasta.Router', function() {
   }));
 
   it('should trigger a route-to with one parameter', sinon.test(function() {
-    var callbackSpy = this.spy(),
-        navigateSpy = this.spy(this.router, 'navigate');
+    var renderSpy = this.spy(Backbone.View.prototype, 'render'),
+        name = 'leland', callbackSpy = this.spy();
 
     this.router.dispatcher.on('route:foo', callbackSpy);
-    run(this, 'some-path/:name');
+    run(this, 'some-path/:name', Backbone.View);
 
-    this.router.dispatcher.trigger('route-to:foo', {name: 'leland'});
-    sinon.assert.called(navigateSpy);
-    sinon.assert.calledWith(navigateSpy, 'some-path/leland');
-    sinon.assert.calledWith(callbackSpy, 'leland');
+    this.router.dispatcher.trigger('route-to:foo', {name: name});
+
+    // Make sure our subscriber to route:foo is being fired off from route-to:foo
+    sinon.assert.called(callbackSpy);
+    sinon.assert.calledWith(callbackSpy, name);
+    // Make sure that our render method is getting called. This might make more sense in Manager, it helps enforce that
+    // Router is working as intended.
+    sinon.assert.called(Backbone.View.prototype.render);
+    sinon.assert.calledWithExactly(Backbone.View.prototype.render, name);
+  }));
+
+  it('should trigger a route-to with two parameter', sinon.test(function() {
+    var name = 'leland', color = 'brown-cow',
+        renderSpy = this.spy(Backbone.View.prototype, 'render');
+
+    run(this, 'animal/:name/color/:color', Backbone.View);
+
+    this.router.dispatcher.trigger('route-to:foo', {name: name, color: color});
+
+    sinon.assert.called(Backbone.View.prototype.render);
+    sinon.assert.calledWithExactly(Backbone.View.prototype.render, name, color);
   }));
 
   it('should create a url with no parameters', function() {
