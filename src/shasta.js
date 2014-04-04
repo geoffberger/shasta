@@ -9,7 +9,7 @@
     root.Shasta = factory(root.jQuery, root._, root.Backbone);
   }
 }(this, function ($, _, Backbone) {
-  var Shasta = {}, Dispatcher = {}, Manager;
+  var Shasta = {}, Dispatcher = {}, Manager, Region, Assembler;
 
   /**
    * Specify our own events for Shasta so they can be interalized and not collide with any existing events. It also
@@ -131,6 +131,111 @@
   Shasta.View = Backbone.View.extend({});
 
   /**
+   * Responsible for holding the state of the region. More specifically, it will handle the dom manipulation or any dom
+   * related functionality/operations.
+   * @param {string} name a unique name to identify with the region
+   * @param {string} el the selector representing the region
+   */
+  Region = Shasta.Region = function(name, el) {
+    this.name = name;
+    this.el = el;
+    this.$el = $(el);
+  };
+
+  Region.prototype.hasRegion = function() {
+    return this.name && this.el;
+  };
+
+  Region.prototype.inject = function(el) {
+    this.$el.html(el);
+  };
+
+  /**
+   * Responsible for creating the view and handing the actual building of the part of the page that is changing.
+   * @param {Backbone.View} view the created that will later be injected into the region
+   * @param {Shasta.Region} region used to interact with the region defined by the manager
+   * @param {object} options variables used to make things more flexible
+   * @param {string} options.method the method to be called on when the view is rendered. Defaults to render.
+   * @param {string} region the name of region, used for instantiation - use the region object instead
+   */
+  Assembler = Shasta.Assembler = function(view, region, options) {
+    this.view = view;
+    this.region = region;
+    this.options = options;
+  };
+
+  Assembler.prototype.callRender = function() {
+    return _.bind(this.render, this);
+  };
+
+  Assembler.prototype.createView = function(params) {
+    var renderedView,
+        method = this.getMethod(),
+        instance = this.createInstance();
+
+    if (instance[method]) {
+      this.addViewToRegion(instance, params, method);
+      return instance;
+    } else {
+      throw new Error('No method with name ' + method + ' was found at ' + this.view.toString());
+    }
+  };
+
+  Assembler.prototype.setRegion = function(region) {
+    this.region = region;
+    return this;
+  };
+
+  Assembler.prototype.getMethod = function() {
+    return this.options.method || 'render';
+  };
+
+  Assembler.prototype.getRegionName = function() {
+    return this.options.region;
+  };
+
+  Assembler.prototype.createInstance = function() {
+    var args = this.options.constructorArgs, instance;
+
+    if (_.isEmpty(this.view.prototype)) {
+      instance = this.view.apply(this, args);
+    } else {
+      instance = new this.view(args);
+    }
+
+    return _.extend({}, instance, {manager: this});
+  };
+
+  Assembler.prototype.addViewToRegion = function(instance, params, method) {
+    var el, renderedView;
+
+    if (this.region.hasRegion()) {
+      renderedView = this.renderView(instance, params, method);
+
+      // We would have a renderedView if the instance itself is being returned.
+      // This wouldn't occur if there was some sort of async operation has to
+      // happen in order for the render to occur. In that case, we let the view
+      // determine when it should perform the render in the form of an event
+      // called `shasta:render`.
+      if (renderedView) {
+        this.region.inject(renderedView.el);
+      } else {
+        instance.on('shasta:render', function(method) {
+          var view = this.renderView(instance, params, method);
+          this.region.inject(view.el);
+        }, this);
+      }
+    } else {
+      throw new Error('No region was found');
+    }
+  };
+
+  Assembler.prototype.renderView = function(instance, params, method) {
+    method = method || 'render';
+    return instance[method].apply(instance, params);
+  };
+
+  /**
    * Responsible for specifying the urls and regions within a given instance. Although they don't have to be used
    * together, the biggest benefit you get out of manager is marrying a route to a given region, such that the region
    * will be properly cleaned up and not leave around any ghost elements or whatever. The usage and implementation is
@@ -155,6 +260,8 @@
 
   Manager.prototype.regions = {};
 
+  Manager.prototype.assemblers = {};
+
   Manager.prototype.currentViews = {};
 
   /**
@@ -163,44 +270,34 @@
    */
   Manager.prototype.run = function(options) {
     Backbone.history.start(options);
-  };
-
-  Manager.prototype.addRegion = function(name, el) {
-    this.regions[name] = $(el);
     return this;
   };
 
-  Manager.prototype.createRouter = function(Router) {
+  Manager.prototype.addRegion = function(name, el) {
+    this.regions[name] = new Shasta.Region(name, el);
+    return this;
+  };
+
+  Manager.prototype.createDefaultRouter = function(Router) {
     return new Shasta.Router();
   };
 
-  Manager.prototype.getCallback = function(View, options) {
-    return _.bind(this.executedCallback, this, View, options);
+  Manager.prototype.getCallback = function(name) {
+    return _.bind(this.executedCallback, this, name);
   };
 
-  Manager.prototype.executedCallback = function(View, options) {
-    var renderedView, params = _.toArray(arguments).splice(2),
-        method = options.method || 'render',
-        region = options.region,
-        instance = this.createInstance(View, options.constructorArgs);
+  Manager.prototype.executedCallback = function(name) {
+    var params, assembler, regionName, view;
 
-    this.cleanUpExistingViews(region);
+    params = _.toArray(arguments).splice(-1);
+    assembler = this.assemblers[name];
+    regionName = assembler.getRegionName();
 
-    if (instance[method]) {
-      renderedView = instance[method].apply(instance, params);
+    assembler.setRegion(this.regions[regionName]);
 
-      if (region) {
-        this.addViewToRegion(instance, params, region, method);
-        this.setCurrentView(region, instance);
-      }
-    } else {
-      throw new Error('No method with name ' + method + ' was found at ' + View.toString());
-    }
-  };
-
-  Manager.prototype.renderView = function(instance, params, method) {
-    method = method || 'render';
-    return instance[method].apply(instance, params);
+    this.cleanUpExistingViews(regionName);
+    view = assembler.createView(params);
+    this.setCurrentView(regionName, view);
   };
 
   Manager.prototype.cleanUpExistingViews = function(region) {
@@ -212,54 +309,25 @@
     }
   };
 
-  Manager.prototype.addViewToRegion = function(instance, params, region, method) {
-    var el, renderedView;
-
-    if ((el = this.regions[region])) {
-      renderedView = this.renderView(instance, params, method);
-
-      // We would have a renderedView if the instance itself is being returned.
-      // This wouldn't occur if there was some sort of async operation has to
-      // happen in order for the render to occur. In that case, we let the view
-      // determine when it should perform the render in the form of an event
-      // called `shasta:render`.
-      if (renderedView) {
-        this.injectViewEl(el, renderedView);
-      } else {
-        instance.on('shasta:render', function(method) {
-          var view = this.renderView(instance, params, method);
-          this.injectViewEl(el, view);
-        }, this);
-      }
-    } else {
-      throw new Error('No region matched on ' + region);
-    }
-  };
-
-  Manager.prototype.injectViewEl = function(el, view) {
-    view.delegateEvents();
-    el.html(view.el);
-  };
-
   Manager.prototype.setCurrentView = function(region, instance) {
     this.currentViews[region] = instance;
   };
 
-  Manager.prototype.createInstance = function(Factory, args) {
-    var instance, factory;
-
-    if (_.isEmpty(Factory.prototype)) {
-      factory = Factory;
-      instance = factory.apply(this, args);
-    } else {
-      instance = new Factory(args);
-    }
-
-    return _.extend({}, instance, {manager: this});
+  Manager.prototype.addAssembler = function(name, assembler) {
+    this.assemblers[name] = assembler;
   };
 
-  Manager.prototype.addUrl = function(url, view, options) {
-    this.router.addUrl(url, options.name, this.getCallback(view, options));
+  Manager.prototype.createAssembler = function(view, options) {
+    var region = this.regions[options.region];
+    return new Shasta.Assembler(view, region, options);
+  };
+
+  Manager.prototype.addUrl = function(name, url, view, options) {
+    if (view) {
+      this.addAssembler(name, this.createAssembler(view, options))
+    }
+
+    this.router.addUrl(url, name, this.getCallback(name));
   };
 
   return Shasta;
