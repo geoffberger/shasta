@@ -4,13 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node node_modules/venus/bin/venus run -t test -n"
+    "test": "node node_modules/venus/bin/venus run -t test"
   },
   "author": "",
   "license": "BSD-2-Clause",
   "dependencies": {},
   "devDependencies": {
-    "venus": "~2.3.1",
-    "chai": "*"
+    "venus": "~2.3.1"
   }
 }
