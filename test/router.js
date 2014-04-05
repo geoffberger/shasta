@@ -5,13 +5,16 @@
  * @venus-include-group main
  */
 describe('Shasta.Router', function() {
-  function run(sandbox, route, callback, options) {
-    route = route || 'some-path';
-    callback = callback || Backbone.View;
-    options = options || {};
-    _.defaults(options || {}, {name: 'foo'});
+  function run(sandbox, args) {
+    args = args || {};
+    _.defaults(args, {
+      name: 'foo',
+      route: 'some-path',
+      callback: function() {},
+      options: {}
+    });
 
-    sandbox.manager.addUrl(route, callback, options);
+    sandbox.manager.addUrl(args.name, args.route, args.callback, args.options);
     sandbox.manager.run();
   }
 
@@ -21,7 +24,9 @@ describe('Shasta.Router', function() {
   });
 
   afterEach(function() {
-    Backbone.history.stop();
+    if (Backbone.History.started) {
+      Backbone.history.stop();
+    }
   });
 
   it('should add a url', sinon.test(function() {
@@ -34,7 +39,10 @@ describe('Shasta.Router', function() {
 
   it('should trigger a route with no parameters', sinon.test(function() {
     var viewSpy = this.spy(Backbone, 'View');
-    run(this, 'some-path', viewSpy);
+
+    run(this, {
+      callback: viewSpy
+    });
 
     this.router.dispatcher.trigger('route:foo');
     sinon.assert.called(viewSpy);
@@ -46,7 +54,11 @@ describe('Shasta.Router', function() {
         name = 'leland', callbackSpy = this.spy();
 
     this.router.dispatcher.on('route:foo', callbackSpy);
-    run(this, 'some-path/:name', Backbone.View);
+
+    run(this, {
+      route: 'some-path/:name',
+      callback: Backbone.View
+    });
 
     this.router.dispatcher.trigger('route-to:foo', {name: name});
 
@@ -63,12 +75,16 @@ describe('Shasta.Router', function() {
     var name = 'leland', color = 'brown-cow',
         renderSpy = this.spy(Backbone.View.prototype, 'render');
 
-    run(this, 'animal/:name/color/:color', Backbone.View);
+    run(this, {
+      name: 'elliott',
+      route: 'animal/:name/color/:color',
+      callback: Backbone.View
+    });
 
-    this.router.dispatcher.trigger('route-to:foo', {name: name, color: color});
+    this.router.dispatcher.trigger('route-to:elliott', {name: name, color: color});
 
-    sinon.assert.called(Backbone.View.prototype.render);
-    sinon.assert.calledWithExactly(Backbone.View.prototype.render, name, color);
+    sinon.assert.called(renderSpy);
+    sinon.assert.calledWithExactly(renderSpy, name, color);
   }));
 
   it('should create a url with no parameters', function() {
