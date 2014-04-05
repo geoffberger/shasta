@@ -147,7 +147,9 @@
   };
 
   Region.prototype.inject = function(el) {
-    this.$el.html(el);
+    if (this.hasRegion()) {
+      this.$el.html(el);
+    }
   };
 
   /**
@@ -207,26 +209,20 @@
   };
 
   Assembler.prototype.addViewToRegion = function(instance, params, method) {
-    var el, renderedView;
+    var renderedView = this.renderView(instance, params, method);
 
-    if (this.region.hasRegion()) {
-      renderedView = this.renderView(instance, params, method);
-
-      // We would have a renderedView if the instance itself is being returned.
-      // This wouldn't occur if there was some sort of async operation has to
-      // happen in order for the render to occur. In that case, we let the view
-      // determine when it should perform the render in the form of an event
-      // called `shasta:render`.
-      if (renderedView) {
-        this.region.inject(renderedView.el);
-      } else {
-        instance.on('shasta:render', function(method) {
-          var view = this.renderView(instance, params, method);
-          this.region.inject(view.el);
-        }, this);
-      }
+    // We would have a renderedView if the instance itself is being returned.
+    // This wouldn't occur if there was some sort of async operation has to
+    // happen in order for the render to occur. In that case, we let the view
+    // determine when it should perform the render in the form of an event
+    // called `shasta:render`.
+    if (renderedView) {
+      this.region.inject(renderedView.el);
     } else {
-      throw new Error('No region was found');
+      instance.on('shasta:render', function(method) {
+        var view = this.renderView(instance, params, method);
+        this.region.inject(view.el);
+      }, this);
     }
   };
 
@@ -273,6 +269,16 @@
     return this;
   };
 
+  Manager.prototype.getRegion = function(name) {
+    var region = this.regions[name];
+
+    if (!region) {
+      this.addRegion(name, null).getRegion(name);
+    }
+
+    return region;
+  };
+
   Manager.prototype.addRegion = function(name, el) {
     this.regions[name] = new Shasta.Region(name, el);
     return this;
@@ -289,7 +295,7 @@
   Manager.prototype.executedCallback = function(name) {
     var params, assembler, regionName, view;
 
-    params = _.toArray(arguments).splice(-1);
+    params = _.toArray(arguments).splice(1);
     assembler = this.assemblers[name];
     regionName = assembler.getRegionName();
 
@@ -318,7 +324,7 @@
   };
 
   Manager.prototype.createAssembler = function(view, options) {
-    var region = this.regions[options.region];
+    var region = this.getRegion(options.region);
     return new Shasta.Assembler(view, region, options);
   };
 
