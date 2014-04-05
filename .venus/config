@@ -1,6 +1,6 @@
 {
   libraries: {
-    mochachai: {
+    'mocha-chai': {
       includes: [
         '../bower_components/jquery/dist/jquery.js',
         '../node_modules/venus/.venus/libraries/sinon-1.5.0.js',
@@ -17,6 +17,7 @@
 
   includes: {
     main: [
+      '../bower_components/jquery/dist/jquery.js',
       '../bower_components/underscore/underscore.js',
       '../bower_components/backbone/backbone.js',
       '../src/shasta.js'
