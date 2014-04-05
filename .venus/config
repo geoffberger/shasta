@@ -10,7 +10,9 @@
         '../node_modules/venus/.venus/adaptors/venus-mocha-1.12.0.js',
         '../bower_components/chai/chai.js',
         '../bower_components/chai-jquery/chai-jquery.js',
-        'helpers/setup.js'
+        'helpers/setup.js',
+        'helpers/manager-factories.js',
+        'helpers/view-factories.js'
       ]
     }
   },
