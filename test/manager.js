@@ -1,4 +1,4 @@
-/* globals Shasta, sinon */
+/* globals Shasta, ManagerFactories, ViewFactories, sinon */
 
 /**
  * @venus-library mocha-chai
@@ -36,88 +36,46 @@ describe('Shasta.Manager', function() {
   });
 
   it('should add a region when the route-to trigger occurs', function() {
-    var tagName = 'h1', text = 'What up!', id = 'iono',
-        view = viewFactory(tagName, text, {id: id});
-
-    createManager(function(manager) {
-      manager.addUrl('nuts', 'peanuts', view, {
-        region: 'content'
-      });
-      manager.addRegion('content', '#content');
-    });
-
-    Shasta.Dispatcher.trigger('route-to:nuts');
+    var view = ViewFactories.pageView();
+    ManagerFactories.pageManager(view.View);
+    Shasta.Dispatcher.trigger('route-to:page');
 
     var el = $('#content > div');
-    expect(el).to.have.id(id);
-    expect(el.find(tagName)).to.exist;
-    expect(el.find(tagName)).to.have.text(text);
+    expect(el).to.have.id(view.attrs.id);
+    expect(el.find(view.tagName)).to.exist;
+    expect(el.find(view.tagName)).to.have.text(view.text);
   });
 
   it('should add a region when adding a url is out of order with region', function() {
-    var tagName = 'h1', text = 'Dolphinately', view = viewFactory(tagName, text);
-
-    createManager(function(manager) {
-      manager.addUrl('bb', 'bobby', view, {
-        region: 'content'
-      });
-      manager.addRegion('content', '#content');
-    });
-
+    var view = ViewFactories.pageView();
+    ManagerFactories.outOfOrderManager(view.View);
     Shasta.Dispatcher.trigger('route-to:bb');
 
     var el = $('#content > div');
-    expect(el.find(tagName)).to.have.text(text);
+    expect(el.find(view.tagName)).to.have.text(view.text);
   });
 
   it('should trigger between two different regions', sinon.test(function() {
-    var home, homeView, about, aboutView, el;
+    var el,
+        homeView = ViewFactories.homeView(),
+        aboutView = ViewFactories.aboutView(),
+        homeRemoveSpy = this.spy(homeView.View.prototype, 'remove');
 
-    home = {
-      tagName: 'h1',
-      text: 'Bobby Bottleservice',
-      attrs: {
-        id: 'home'
-      }
-    };
-
-    homeView = viewFactory(home.tagName, home.text, home.attrs);
-
-    var removeSpy = this.spy(homeView.prototype, 'remove');
-
-    about = {
-      tagName: 'h2',
-      text: 'About Bobby',
-      attrs: {
-        tagName: 'section',
-        className: 'about'
-      }
-    };
-
-    aboutView = viewFactory(about.tagName, about.text, about.attrs);
-
-    var manager = createManager(function(manager) {
-      manager.addRegion('content', '#content');
-
-      manager.addUrl('home', 'homepage', homeView, {
-        region: 'content'
-      });
-
-      manager.addUrl('about', 'about', aboutView, {
-        region: 'content'
-      });
-    });
+    ManagerFactories.multiPageManager(homeView.View, aboutView.View);
 
     Shasta.Dispatcher.trigger('route-to:home');
     el = $('#content > div');
-    expect(el).to.have.id(home.attrs.id);
-    expect(el.find(home.tagName)).to.exist;
-    expect(el.find(home.tagName)).to.have.text(home.text);
+    expect(el).to.have.id(homeView.attrs.id);
+    expect(el.find(homeView.tagName)).to.exist;
+    expect(el.find(homeView.tagName)).to.have.text(homeView.text);
 
     Shasta.Dispatcher.trigger('route-to:about');
-    el = $('#content > ' + about.attrs.tagName);
-    expect(el).to.have.class(about.attrs.className);
-    expect(el.find(about.tagName)).to.exist;
-    expect(el.find(about.tagName)).to.have.text(about.text);
+
+    sinon.assert.called(homeRemoveSpy);
+
+    el = $('#content > ' + aboutView.attrs.tagName);
+    expect(el).to.have.class(aboutView.attrs.className);
+    expect(el.find(aboutView.tagName)).to.exist;
+    expect(el.find(aboutView.tagName)).to.have.text(aboutView.text);
   }));
 });
