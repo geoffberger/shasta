@@ -20,5 +20,10 @@
   "devDependencies": {
     "chai-jquery": "~1.2.1",
     "chai": "~1.9.1"
-  }
+  },
+  "keywords": [
+    "backbone",
+    "router",
+    "shasta"
+  ]
 }
