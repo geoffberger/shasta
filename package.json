@@ -1,6 +1,6 @@
 {
   "name": "shasta",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A small utility library built on top of Backbone that handles routing and rendering.",
   "main": "src/shasta.js",
   "scripts": {
