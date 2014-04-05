@@ -36,22 +36,22 @@ describe('Shasta.Manager', function() {
   });
 
   it('should add a region when the route-to trigger occurs', function() {
-    var view = ViewFactories.pageView();
+    var el, view = ViewFactories.pageView();
     ManagerFactories.pageManager(view.View);
     Shasta.Dispatcher.trigger('route-to:page');
 
-    var el = $('#content > div');
+    el = $('#content > div');
     expect(el).to.have.id(view.attrs.id);
     expect(el.find(view.tagName)).to.exist;
     expect(el.find(view.tagName)).to.have.text(view.text);
   });
 
   it('should add a region when adding a url is out of order with region', function() {
-    var view = ViewFactories.pageView();
+    var el, view = ViewFactories.pageView();
     ManagerFactories.outOfOrderManager(view.View);
     Shasta.Dispatcher.trigger('route-to:bb');
 
-    var el = $('#content > div');
+    el = $('#content > div');
     expect(el.find(view.tagName)).to.have.text(view.text);
   });
 
@@ -63,16 +63,22 @@ describe('Shasta.Manager', function() {
 
     ManagerFactories.multiPageManager(homeView.View, aboutView.View);
 
+    // trigger the route and verify that things are appearing in the dom as expected
     Shasta.Dispatcher.trigger('route-to:home');
     el = $('#content > div');
     expect(el).to.have.id(homeView.attrs.id);
     expect(el.find(homeView.tagName)).to.exist;
     expect(el.find(homeView.tagName)).to.have.text(homeView.text);
 
+    // trigger the second route to make sure that the what appears is what is epxcted
     Shasta.Dispatcher.trigger('route-to:about');
 
+    // we want to make sure that the previous view has been removed. to do so, we make sure that remove is called in
+    // some capacity, which indicates that Backbone will do whatever it does so that all the remaining pieces have been
+    // properly garbage collected and what not.
     sinon.assert.called(homeRemoveSpy);
 
+    // do the usual assertions to make sure we are expecting the new view
     el = $('#content > ' + aboutView.attrs.tagName);
     expect(el).to.have.class(aboutView.attrs.className);
     expect(el.find(aboutView.tagName)).to.exist;
