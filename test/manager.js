@@ -1,7 +1,7 @@
 /* globals Shasta, sinon */
 
 /**
- * @venus-library mochachai
+ * @venus-library mocha-chai
  * @venus-fixture fixtures/layout.html
  * @venus-include-group main
  */
@@ -24,7 +24,9 @@ describe('Shasta.Manager', function() {
   }
 
   afterEach(function() {
-    Backbone.history.stop();
+    if (Backbone.History.started) {
+      Backbone.history.stop();
+    }
   });
 
   it('should be able to take in an optional Router', function() {
@@ -48,11 +50,11 @@ describe('Shasta.Manager', function() {
 
     var el = $('#content > div');
     expect(el).to.have.id(id);
-    expect(el).to.have(tagName);
+    expect(el.find(tagName)).to.exist;
     expect(el.find(tagName)).to.have.text(text);
   });
 
-  xit('should add a region when adding a url is out of order with region', function() {
+  it('should add a region when adding a url is out of order with region', function() {
     var tagName = 'h1', text = 'Dolphinately', view = viewFactory(tagName, text);
 
     createManager(function(manager) {
@@ -109,13 +111,13 @@ describe('Shasta.Manager', function() {
     Shasta.Dispatcher.trigger('route-to:home');
     el = $('#content > div');
     expect(el).to.have.id(home.attrs.id);
-    expect(el).to.have(home.tagName);
+    expect(el.find(home.tagName)).to.exist;
     expect(el.find(home.tagName)).to.have.text(home.text);
 
     Shasta.Dispatcher.trigger('route-to:about');
     el = $('#content > ' + about.attrs.tagName);
     expect(el).to.have.class(about.attrs.className);
-    expect(el).to.have(about.tagName);
+    expect(el.find(about.tagName)).to.exist;
     expect(el.find(about.tagName)).to.have.text(about.text);
   }));
 });
