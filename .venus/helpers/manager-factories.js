@@ -8,7 +8,7 @@ var ManagerFactories = (function() {
   }
 
   function pageManager(view) {
-    createManager(function(manager) {
+    return createManager(function(manager) {
       manager.addUrl('page', 'some-page', view, {
         region: 'content'
       });
@@ -17,7 +17,7 @@ var ManagerFactories = (function() {
   }
 
   function outOfOrderManager(view) {
-    createManager(function(manager) {
+    return createManager(function(manager) {
       manager.addUrl('bb', 'bobby', view, {
         region: 'content'
       });
@@ -26,7 +26,7 @@ var ManagerFactories = (function() {
   }
 
   function multiPageManager(homeView, aboutView) {
-    createManager(function(manager) {
+    return createManager(function(manager) {
       manager.addRegion('content', '#content');
 
       manager.addUrl('home', 'homepage', homeView, {
