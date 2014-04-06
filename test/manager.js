@@ -84,4 +84,15 @@ describe('Shasta.Manager', function() {
     expect(el.find(aboutView.tagName)).to.exist;
     expect(el.find(aboutView.tagName)).to.have.text(aboutView.text);
   }));
+
+  it('should be sending a teardown event to the current view', sinon.test(function() {
+    var el,
+        view = ViewFactories.pageView(),
+        triggerSpy = this.spy(view.View.prototype, 'trigger');
+
+    ManagerFactories.pageManager(view.View);
+    Shasta.Dispatcher.trigger('route-to:page');
+    sinon.assert.called(triggerSpy);
+    sinon.assert.calledWithExactly(triggerSpy, 'teardown');
+  }));
 });
