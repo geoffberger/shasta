@@ -4,7 +4,8 @@
   "description": "A small utility library built on top of Backbone that handles routing and rendering.",
   "main": "src/shasta.js",
   "scripts": {
-    "test": "node node_modules/venus/bin/venus run -t test -n"
+    "test": "node node_modules/venus/bin/venus run -t test -n",
+    "browser_test": "node node_modules/venus/bin/venus run -t test"
   },
   "author": "Geoff Berger <geoffberger@gmail.com>",
   "license": "MIT",

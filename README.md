@@ -37,7 +37,7 @@ To run tests, do the following:
 
 This will start venus (a test runner) with phantomjs. If you want to run the tests in the browser, do the following:
 
-    node node_modules/venus/bin/venus run -t test
+    npm run-script browser_test
 
 The basic tests are in place now and more need to be written.
 
